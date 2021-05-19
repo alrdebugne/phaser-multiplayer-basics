@@ -4,6 +4,8 @@ var server = require('http').Server(app);
 var { Server } = require("socket.io");
 var io = new Server(server);
 
+var players = {};
+
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', function (req, res) {
@@ -11,9 +13,34 @@ app.get('/', function (req, res) {
 });
 
 io.on('connection', function (socket) {
-    console.log('A user connected');
+    /*
+    ~~~ Connection ~~~
+    */
+    console.log(`New user ${socket.id} connected`);
+    // Create a new player, and add it to the players object
+    players[socket.id] = {
+        rotation: 0,
+        x: Math.floor(Math.random() * 700) + 50,
+        y: Math.floor(Math.random() * 500) + 50,
+        playerId: socket.id,
+        team: (Math.floor(Math.random() * 2) == 0) ? 'red' : 'blue'
+    };
+    // Send current players to the newly spawned player
+    socket.emit('currentPlayers', players);
+    // Update all other active players with the newly spawned player
+    socket.broadcast.emit('newPlayer', players[socket.id]);
+    // ^ socket.emit only sends event to this particular socket
+    //   socket.broadcast.emit sends event to all other sockets
+
     socket.on('disconnect', function() {
-        console.log('User disconnected');
+        /*
+        ~~~ Disconnection ~~~
+        */
+        console.log(`User ${socket.id} disconnected`);
+        // Remove player from players object
+        delete players[socket.id];
+        // Emit message to all other players to remove disconnected player
+        io.emit('playerDisconnect', socket.id)
     });
 });
 
