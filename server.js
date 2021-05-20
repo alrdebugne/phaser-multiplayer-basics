@@ -25,12 +25,12 @@ io.on('connection', function (socket) {
         playerId: socket.id,
         team: (Math.floor(Math.random() * 2) == 0) ? 'red' : 'blue'
     };
-    // Send current players to the newly spawned player
+    // Update all players with newly spawned player
     socket.emit('currentPlayers', players);
     // Update all other active players with the newly spawned player
     socket.broadcast.emit('newPlayer', players[socket.id]);
-    // ^ socket.emit only sends event to this particular socket
-    //   socket.broadcast.emit sends event to all other sockets
+    // ^ socket.emit sends event to every socket
+    //   socket.broadcast.emit sends event to every socket except the emitting one
 
     socket.on('disconnect', function() {
         /*
