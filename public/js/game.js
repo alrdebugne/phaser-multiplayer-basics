@@ -49,8 +49,8 @@ function create() {
     });
 
     // Remove players upon disconnection
-    this.socket.on('disconnect', function (playerId) {
-        self.otherPlayers.getChildren().forEarch(function (otherPlayer) {
+    this.socket.on('playerDisconnect', function (playerId) {
+        self.otherPlayers.getChildren().forEach(function (otherPlayer) {
             if (playerId === otherPlayer.playerId) {
                 otherPlayer.destroy();
             }
