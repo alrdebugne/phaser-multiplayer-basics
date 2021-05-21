@@ -12,10 +12,10 @@ app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
 });
 
+/*
+~~~ Connection ~~~
+*/
 io.on('connection', function (socket) {
-    /*
-    ~~~ Connection ~~~
-    */
     console.log(`New user ${socket.id} connected`);
     // Create a new player, and add it to the players object
     players[socket.id] = {
@@ -32,16 +32,27 @@ io.on('connection', function (socket) {
     // ^ socket.emit sends event to every socket
     //   socket.broadcast.emit sends event to every socket except the emitting one
 
+    /*
+    ~~~ Disconnection ~~~
+    */
     socket.on('disconnect', function() {
-        /*
-        ~~~ Disconnection ~~~
-        */
         console.log(`User ${socket.id} disconnected`);
         // Remove player from players object
         delete players[socket.id];
         // Emit message to all other players to remove disconnected player
-        io.emit('playerDisconnect', socket.id)
+        io.emit('playerDisconnects', socket.id)
     });
+
+    /*
+    ~~~ Movement ~~~
+    */
+   socket.on('playerMoves', function (movement) {
+       players[socket.id].x = movement.x;
+       players[socket.id].y = movement.y;
+       players[socket.id].rotation = movement.rotation;
+       // Broadcast message to all other players about current socket's movement
+       socket.broadcast.emit('updatePlayerMovement', players[socket.id]);
+   })
 });
 
 server.listen(8081, function() {

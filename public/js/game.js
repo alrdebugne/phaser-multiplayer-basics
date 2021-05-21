@@ -30,7 +30,7 @@ function create() {
     this.socket = io();
     this.otherPlayers = this.physics.add.group();
 
-    // Update position of current players
+    // Create players
     this.socket.on('currentPlayers', function (players) {
         Object.keys(players).forEach(function (id) {
             if (players[id].playerId === self.socket.id) {
@@ -43,16 +43,26 @@ function create() {
         });
     });
 
-    // Add position of new player
+    // Add position of new entrant
     this.socket.on('newPlayer', function (playerInfo) {
         addOtherPlayers(self, playerInfo)
     });
 
     // Remove players upon disconnection
-    this.socket.on('playerDisconnect', function (playerId) {
+    this.socket.on('playerDisconnects', function (playerId) {
         self.otherPlayers.getChildren().forEach(function (otherPlayer) {
             if (playerId === otherPlayer.playerId) {
                 otherPlayer.destroy();
+            }
+        });
+    });
+
+    // Update on-screen position of other players
+    this.socket.on('updatePlayerMovement', function (playerInfo) {
+        self.otherPlayers.getChildren().forEach(function (otherPlayer) {
+            if (playerInfo.playerId === otherPlayer.playerId) {
+                otherPlayer.setRotation(playerInfo.rotation);
+                otherPlayer.setPosition(playerInfo.x, playerInfo.y);
             }
         });
     });
@@ -79,6 +89,20 @@ function update() {
         } else {
             this.ship.setAcceleration(0);
         }
+
+        // Emit player movement, if it has changed
+        var x = this.ship.x;
+        var y = this.ship.y;
+        var r = this.ship.rotation;
+        if (this.ship.oldPosition && (x !== this.ship.oldPosition.x || y !== this.ship.oldPosition.y || r !== this.ship.oldPosition.rotation)) {
+            this.socket.emit('playerMoves', { x: this.ship.x, y: this.ship.y, rotation: this.ship.rotation});
+        }
+        // Store old position
+        this.ship.oldPosition = {
+            x: this.ship.x,
+            y: this.ship.y,
+            rotation: this.ship.rotation,
+        };
 
         this.physics.world.wrap(this.ship, 5);
     }
