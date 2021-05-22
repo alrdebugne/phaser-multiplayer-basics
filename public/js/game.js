@@ -20,15 +20,24 @@ var config = {
 var game = new Phaser.Game(config);
 
 function preload() {
-    // Load assets
+    /*
+    ~~~ Load assets ~~~
+    */
+    // Spaceships
     this.load.image('red', 'assets/spaceships/spaceship2_red.png');
     this.load.image('blue', 'assets/spaceships/spaceship2_blue.png');
+    // Background
+    this.load.image('background', 'assets/background/purple.png');
 }
 
 function create() {
     var self = this;
     this.socket = io();
     this.otherPlayers = this.physics.add.group();
+
+    // Create background
+    this.background = this.add.image(window.innerWidth / 2, window.innerHeight / 2, 'background');
+    this.background.setDisplaySize(window.innerWidth, window.innerHeight);
 
     // Create players
     this.socket.on('currentPlayers', function (players) {

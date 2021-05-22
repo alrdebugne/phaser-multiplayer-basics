@@ -5,6 +5,12 @@ var { Server } = require("socket.io");
 var io = new Server(server);
 
 var players = {};
+var scores = {
+    blue: 0,
+    red: 0,
+    green: 0,
+    orange: 0,
+};
 
 app.use(express.static(__dirname + '/public'));
 
