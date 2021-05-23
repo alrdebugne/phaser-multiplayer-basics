@@ -1,3 +1,6 @@
+import { LaserGroup } from './lasers.js';
+import { MultiKey } from './multi-key.js';
+
 var config = {
     type: Phaser.AUTO,
     parent: 'phaser-example',
@@ -26,6 +29,9 @@ function preload() {
     // Spaceships
     this.load.image('red', 'assets/spaceships/spaceship2_red.png');
     this.load.image('blue', 'assets/spaceships/spaceship2_blue.png');
+    // Weapons
+    this.load.image('laserRed', 'assets/weapons/laserRed01.png')
+    this.load.image('laserBlue', 'assets/weapons/laserBlue01.png')
     // Background
     this.load.image('background', 'assets/background/purple.png');
 }
@@ -52,6 +58,13 @@ function create() {
         });
     });
 
+    // Create laser group
+    this.laserGroup = new LaserGroup(this, this.ship);
+
+    /*
+    ~~~ Emit updates ~~~
+    */
+
     // Add position of new entrant
     this.socket.on('newPlayer', function (playerInfo) {
         addOtherPlayers(self, playerInfo)
@@ -76,27 +89,39 @@ function create() {
         });
     });
 
-    this.cursors = this.input.keyboard.createCursorKeys();
+    /*
+    ~~~ Controls ~~~
+    */
+
+    const { LEFT, RIGHT, UP, SPACE, A, D, W } = Phaser.Input.Keyboard.KeyCodes;
+    this.leftInput = new MultiKey(this, [LEFT, A]);
+    this.rightInput = new MultiKey(this, [RIGHT, D]);
+    this.forwardInput = new MultiKey(this, [UP, W]);
+    this.spaceInput = new MultiKey(this, [SPACE]);
 }
 
 function update() {
     // TODO: copy dynamics from Unity project
     if (this.ship) {
         // Rotation
-        if (this.cursors.left.isDown) {
+        if (this.leftInput.isDown()) {
             this.ship.setAngularVelocity(-150);
-        } else if (this.cursors.right.isDown) {
+        } else if (this.rightInput.isDown()) {
             this.ship.setAngularVelocity(150);
         } else {
             this.ship.setAngularVelocity(0);
         }
         // Movement
-        if (this.cursors.up.isDown) {
+        if (this.forwardInput.isDown()) {
             this.physics.velocityFromRotation(
                 this.ship.rotation + 1.5, 100, this.ship.body.acceleration
             );
         } else {
             this.ship.setAcceleration(0);
+        }
+        // Shoot laser
+        if (this.spaceInput.justDown()) {
+            shootLaser(this);
         }
 
         // Emit player movement, if it has changed
@@ -135,4 +160,8 @@ function addOtherPlayers(self, playerInfo) {
         .setDisplaySize(53, 40);
     otherPlayer.playerId = playerInfo.playerId;
     self.otherPlayers.add(otherPlayer);
+}
+
+function shootLaser(self) {
+    self.laserGroup.fireLaser(self.ship.x, self.ship.y, self.ship.rotation);
 }
