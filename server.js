@@ -5,6 +5,7 @@ var { Server } = require("socket.io");
 var io = new Server(server);
 
 var players = {};
+var lasers = {};
 var scores = {
     blue: 0,
     red: 0,
@@ -58,7 +59,15 @@ io.on('connection', function (socket) {
        players[socket.id].rotation = movement.rotation;
        // Broadcast message to all other players about current socket's movement
        socket.broadcast.emit('updatePlayerMovement', players[socket.id]);
-   })
+   });
+
+   /*
+   ~~~ Lasers ~~~
+   */
+//   socket.on('playerShoots', function () {
+//     lasers[socket.id]
+//   });
+
 });
 
 server.listen(8081, function() {

@@ -23,6 +23,7 @@ var config = {
 var game = new Phaser.Game(config);
 
 function preload() {
+    this.window = window;
     /*
     ~~~ Load assets ~~~
     */
@@ -40,6 +41,7 @@ function create() {
     var self = this;
     this.socket = io();
     this.otherPlayers = this.physics.add.group();
+    this.otherLasers = this.physics.add.group();
 
     // Create background
     this.background = this.add.image(window.innerWidth / 2, window.innerHeight / 2, 'background');
@@ -57,10 +59,6 @@ function create() {
             }
         });
     });
-
-    /*
-    ~~~ Emit updates ~~~
-    */
 
     // Add position of new entrant
     this.socket.on('newPlayer', function (playerInfo) {
@@ -85,6 +83,8 @@ function create() {
             }
         });
     });
+    
+    // Update on-screen position of other lasers
 
     /*
     ~~~ Controls ~~~
@@ -135,6 +135,16 @@ function update() {
             rotation: this.ship.rotation,
         };
 
+        // Emit laser position
+        // Note this must be emitted every time any laser is active
+        // (not just on shooting)
+        if (this.ship.laserGroup) {
+            if (this.ship.laserGroup.countActive() > 0) {
+                // console.log(this.ship.laserGroup);
+                this.socket.emit('lasersFire', {});
+            }
+        }
+        
         this.physics.world.wrap(this.ship, 5);
     }
 

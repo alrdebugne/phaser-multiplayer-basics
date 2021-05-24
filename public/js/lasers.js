@@ -13,7 +13,7 @@ class LaserGroup extends Phaser.Physics.Arcade.Group
         
         this.createMultiple({
             classType: Laser,
-            frameQuantity: 30,
+            frameQuantity: 3,
             active: false,
             visible: false,
             key: laserSpriteKey
@@ -55,13 +55,12 @@ class Laser extends Phaser.Physics.Arcade.Sprite {
     preUpdate(time, delta) {
         super.preUpdate(time, delta);
 
-        const cond = false;
-        if (cond) {
+        // Set laser to inactive once it leaves the screen
+        var window = this.scene.window;
+        if (this.y < 0 || this.y > window.innerHeight || this.x < 0 || this.x > window.innerWidth) {
             this.setActive(false);
             this.setVisible(false);
         }
-        // ^ TODO: replace with viable condition to allow user to
-        // to refill lasers after a while
     }
 }
 
