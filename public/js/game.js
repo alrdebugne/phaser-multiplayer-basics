@@ -30,8 +30,8 @@ function preload() {
     this.load.image('red', 'assets/spaceships/spaceship2_red.png');
     this.load.image('blue', 'assets/spaceships/spaceship2_blue.png');
     // Weapons
-    this.load.image('laserRed', 'assets/weapons/laserRed01.png')
-    this.load.image('laserBlue', 'assets/weapons/laserBlue01.png')
+    this.load.image('laserRed', 'assets/weapons/laserRedShort.png')
+    this.load.image('laserBlue', 'assets/weapons/laserBlueShort.png')
     // Background
     this.load.image('background', 'assets/background/purple.png');
 }
@@ -57,9 +57,6 @@ function create() {
             }
         });
     });
-
-    // Create laser group
-    this.laserGroup = new LaserGroup(this, this.ship);
 
     /*
     ~~~ Emit updates ~~~
@@ -144,6 +141,7 @@ function update() {
 }
 
 function addPlayer(self, playerInfo) {
+    // Create sprite
     var spriteName = `${playerInfo.team}`
     self.ship = self.physics.add.image(playerInfo.x, playerInfo.y, spriteName)
         .setOrigin(0.5, 0.5)
@@ -151,6 +149,9 @@ function addPlayer(self, playerInfo) {
     self.ship.setDrag(100);
     self.ship.setAngularDrag(100);
     self.ship.setMaxVelocity(200);
+    self.ship.team = spriteName;
+    // Assign laser group to ship
+    self.ship.laserGroup = new LaserGroup(self);
 }
 
 function addOtherPlayers(self, playerInfo) {
@@ -163,5 +164,9 @@ function addOtherPlayers(self, playerInfo) {
 }
 
 function shootLaser(self) {
-    self.laserGroup.fireLaser(self.ship.x, self.ship.y, self.ship.rotation);
+    var dr = 20;
+    var theta = self.ship.rotation + 90 * Math.PI / 180;
+    var dx = dr * Math.cos(theta);
+    var dy = dr * Math.sin(theta);
+    self.ship.laserGroup.fireLaser(self.ship.x + dx, self.ship.y + dy, self.ship.rotation);
 }

@@ -1,21 +1,22 @@
 class LaserGroup extends Phaser.Physics.Arcade.Group
 {
-    constructor(scene, spaceship) {
+    constructor(scene) {
         super(scene.physics.world, scene);
 
-        if (spaceship) {
-            var team = spaceship.team;
-            var teamCapitalised = team.charAt(0).toUpperCase() + team.slice(1);
-        } else {
-            var teamCapitalised = null;
-        }
         // Initialise group
+        if (scene.ship) {
+            var team = scene.ship.team;
+            var laserSpriteKey = 'laser' + team.charAt(0).toUpperCase() + team.slice(1)
+        } else {
+            var laserSpriteKey = null;
+        }
+        
         this.createMultiple({
             classType: Laser,
             frameQuantity: 30,
             active: false,
             visible: false,
-            key: 'laser'
+            key: laserSpriteKey
         })
     }
 
@@ -30,21 +31,25 @@ class LaserGroup extends Phaser.Physics.Arcade.Group
 
 class Laser extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y) {
-        super(scene, x, y, 'laserRed');
+        var team = scene.ship.team;
+        var laserSpriteKey = 'laser' + team.charAt(0).toUpperCase() + team.slice(1)
+        super(scene, x, y, laserSpriteKey);
     }
 
     fire(x, y, rotation) {
         this.body.reset(x, y);
 
+        // Turn sprite on, and rotate
         this.setActive(true);
         this.setVisible(true);
+        this.rotation = rotation;
 
         // Shoot laser in direction facing spaceship
         var speed = new Phaser.Math.Vector2();
         speed.setToPolar(rotation + 90 * Math.PI / 180);
         // ^ align axes
-        this.setVelocityX(speed.x * 800);
-        this.setVelocityY(speed.y * 800);
+        this.setVelocityX(speed.x * 500);
+        this.setVelocityY(speed.y * 500);
     }
 
     preUpdate(time, delta) {
