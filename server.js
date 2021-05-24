@@ -53,20 +53,22 @@ io.on('connection', function (socket) {
     /*
     ~~~ Movement ~~~
     */
-   socket.on('playerMoves', function (movement) {
-       players[socket.id].x = movement.x;
-       players[socket.id].y = movement.y;
-       players[socket.id].rotation = movement.rotation;
-       // Broadcast message to all other players about current socket's movement
-       socket.broadcast.emit('updatePlayerMovement', players[socket.id]);
+    socket.on('playerMoves', function (movement) {
+        players[socket.id].x = movement.x;
+        players[socket.id].y = movement.y;
+        players[socket.id].rotation = movement.rotation;
+        // Broadcast message to all other players about current socket's movement
+        socket.broadcast.emit('updatePlayerMovement', players[socket.id]);
    });
 
    /*
    ~~~ Lasers ~~~
    */
-//   socket.on('playerShoots', function () {
-//     lasers[socket.id]
-//   });
+   socket.on('laserFired', function (laserInfo) {
+        lasers[socket.id] = laserInfo;
+        // Broadcast message to all other players about current socket's active lasers
+        socket.broadcast.emit('createPlayerLaser', lasers[socket.id]);
+  });
 
 });
 

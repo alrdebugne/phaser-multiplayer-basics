@@ -5,10 +5,10 @@ class LaserGroup extends Phaser.Physics.Arcade.Group
 
         // Initialise group
         if (scene.ship) {
-            var team = scene.ship.team;
-            var laserSpriteKey = 'laser' + team.charAt(0).toUpperCase() + team.slice(1)
+            this.team = scene.ship.team;
+            this.laserSpriteKey = this.team + 'Laser';
         } else {
-            var laserSpriteKey = null;
+            this.laserSpriteKey = null;
         }
         
         this.createMultiple({
@@ -16,8 +16,10 @@ class LaserGroup extends Phaser.Physics.Arcade.Group
             frameQuantity: 3,
             active: false,
             visible: false,
-            key: laserSpriteKey
-        })
+            key: this.laserSpriteKey
+        });
+        // ^ max. of 3 laser on-screen at once
+        // (refreshed on leaving screen)
     }
 
     fireLaser(x, y, rotation) {
@@ -25,15 +27,24 @@ class LaserGroup extends Phaser.Physics.Arcade.Group
         const laser = this.getFirstDead(false);
         if (laser) {
             laser.fire(x, y, rotation);
+            // Emit message that laser was fired
+            this.scene.socket.emit('laserFired', {
+                x: laser.x,
+                y: laser.y,
+                velocityX: laser.body.velocity.x,
+                velocityY: laser.body.velocity.y,
+                rotation: laser.rotation,
+                socketId: this.scene.socket.id,
+                team: laser.team
+            });
         }
     }
 }
 
 class Laser extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y) {
-        var team = scene.ship.team;
-        var laserSpriteKey = 'laser' + team.charAt(0).toUpperCase() + team.slice(1)
-        super(scene, x, y, laserSpriteKey);
+        super(scene, x, y, scene.ship.team + 'Laser');
+        this.team = this.scene.ship.team;
     }
 
     fire(x, y, rotation) {

@@ -31,8 +31,8 @@ function preload() {
     this.load.image('red', 'assets/spaceships/spaceship2_red.png');
     this.load.image('blue', 'assets/spaceships/spaceship2_blue.png');
     // Weapons
-    this.load.image('laserRed', 'assets/weapons/laserRedShort.png')
-    this.load.image('laserBlue', 'assets/weapons/laserBlueShort.png')
+    this.load.image('redLaser', 'assets/weapons/laserRedShort.png')
+    this.load.image('blueLaser', 'assets/weapons/laserBlueShort.png')
     // Background
     this.load.image('background', 'assets/background/purple.png');
 }
@@ -41,7 +41,8 @@ function create() {
     var self = this;
     this.socket = io();
     this.otherPlayers = this.physics.add.group();
-    this.otherLasers = this.physics.add.group();
+    // this.otherLasers = this.physics.add.group();
+    this.otherLasers = new LaserGroup(self);
 
     // Create background
     this.background = this.add.image(window.innerWidth / 2, window.innerHeight / 2, 'background');
@@ -83,8 +84,13 @@ function create() {
             }
         });
     });
-    
-    // Update on-screen position of other lasers
+
+    // Create lasers
+    this.socket.on('createPlayerLaser', function (laserInfo) {
+        if (laserInfo.socketId !== self.socket.id) {
+            addOtherLasers(self, laserInfo);
+        }
+    });
 
     /*
     ~~~ Controls ~~~
@@ -119,6 +125,7 @@ function update() {
         // Shoot laser
         if (this.spaceInput.justDown()) {
             shootLaser(this);
+            // Note: shootLaser emits message 'laserFired'
         }
 
         // Emit player movement, if it has changed
@@ -134,22 +141,15 @@ function update() {
             y: this.ship.y,
             rotation: this.ship.rotation,
         };
-
-        // Emit laser position
-        // Note this must be emitted every time any laser is active
-        // (not just on shooting)
-        if (this.ship.laserGroup) {
-            if (this.ship.laserGroup.countActive() > 0) {
-                // console.log(this.ship.laserGroup);
-                this.socket.emit('lasersFire', {});
-            }
-        }
         
         this.physics.world.wrap(this.ship, 5);
     }
 
 }
 
+/*
+~~~ Functions for client's ship ~~~
+*/
 function addPlayer(self, playerInfo) {
     // Create sprite
     var spriteName = `${playerInfo.team}`
@@ -164,7 +164,19 @@ function addPlayer(self, playerInfo) {
     self.ship.laserGroup = new LaserGroup(self);
 }
 
+function shootLaser(self) {
+    var dr = 20;
+    var theta = self.ship.rotation + 90 * Math.PI / 180;
+    var dx = dr * Math.cos(theta);
+    var dy = dr * Math.sin(theta);
+    self.ship.laserGroup.fireLaser(self.ship.x + dx, self.ship.y + dy, self.ship.rotation);
+}
+
+/*
+~~~ Functions for other ships ~~~
+*/
 function addOtherPlayers(self, playerInfo) {
+    // Create new player, and add to Group `otherPlayers`
     var spriteName = `${playerInfo.team}`
     const otherPlayer = self.physics.add.image(playerInfo.x, playerInfo.y, spriteName)
         .setOrigin(0.5, 0.5)
@@ -173,10 +185,13 @@ function addOtherPlayers(self, playerInfo) {
     self.otherPlayers.add(otherPlayer);
 }
 
-function shootLaser(self) {
-    var dr = 20;
-    var theta = self.ship.rotation + 90 * Math.PI / 180;
-    var dx = dr * Math.cos(theta);
-    var dy = dr * Math.sin(theta);
-    self.ship.laserGroup.fireLaser(self.ship.x + dx, self.ship.y + dy, self.ship.rotation);
+function addOtherLasers(self, laserInfo) {
+    // Create new laser and add to Group `otherLasers`
+    var spriteName = `${laserInfo.team}` + 'Laser';
+    const otherLaser = self.physics.add.image(laserInfo.x, laserInfo.y, spriteName);
+    otherLaser.setVelocityX(laserInfo.velocityX);
+    otherLaser.setVelocityY(laserInfo.velocityY);
+    otherLaser.rotation = laserInfo.rotation;
+    otherLaser.team = laserInfo.team;
+    self.otherLasers.add(otherLaser);
 }
