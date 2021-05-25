@@ -9,7 +9,7 @@ var config = {
     physics: {
         default: 'arcade',
         arcade: {
-            debug: false,
+            debug: true,
             gravity: { y: 0 } 
         }
     },
@@ -41,8 +41,7 @@ function create() {
     var self = this;
     this.socket = io();
     this.otherPlayers = this.physics.add.group();
-    // this.otherLasers = this.physics.add.group();
-    this.otherLasers = new LaserGroup(self);
+    this.otherLasers = this.physics.add.group();
 
     // Create background
     this.background = this.add.image(window.innerWidth / 2, window.innerHeight / 2, 'background');
@@ -188,10 +187,23 @@ function addOtherPlayers(self, playerInfo) {
 function addOtherLasers(self, laserInfo) {
     // Create new laser and add to Group `otherLasers`
     var spriteName = `${laserInfo.team}` + 'Laser';
-    const otherLaser = self.physics.add.image(laserInfo.x, laserInfo.y, spriteName);
+    const otherLaser = self.otherLasers.create(laserInfo.x, laserInfo.y, spriteName);
+    // self.otherLasers.add(otherLaser);
+    // ^ Note: for whatever reason, velocities must be set _after_ adding
+    // the body to the group (otherwise they get reset to 0).
     otherLaser.setVelocityX(laserInfo.velocityX);
     otherLaser.setVelocityY(laserInfo.velocityY);
     otherLaser.rotation = laserInfo.rotation;
     otherLaser.team = laserInfo.team;
-    self.otherLasers.add(otherLaser);
+    // Destroy laser once it leaves the screen
+    // This is achieved by activating collisions with world bounds, then destroying
+    // the laser when a collision event is detected.
+    otherLaser.setCollideWorldBounds(true);
+    otherLaser.body.onWorldBounds = true;
+    otherLaser.body.world.on('worldbounds', function(body) {
+        // Check that object of collision is indeed the laser
+        if (body.gameObject === otherLaser) {
+            otherLaser.destroy();
+        }
+    }, otherLaser);
 }
