@@ -1,3 +1,4 @@
+import { Spaceship } from './ship.js';
 import { LaserGroup } from './lasers.js';
 import { MultiKey } from './multi-key.js';
 
@@ -103,7 +104,6 @@ function create() {
 }
 
 function update() {
-    // TODO: copy dynamics from Unity project
     if (this.ship) {
         // Rotation
         if (this.leftInput.isDown()) {
@@ -123,8 +123,7 @@ function update() {
         }
         // Shoot laser
         if (this.spaceInput.justDown()) {
-            shootLaser(this);
-            // Note: shootLaser emits message 'laserFired'
+            shootLaser(this);  // emits message 'laserFired'
         }
 
         // Emit player movement, if it has changed
@@ -150,16 +149,8 @@ function update() {
 ~~~ Functions for client's ship ~~~
 */
 function addPlayer(self, playerInfo) {
-    // Create sprite
-    var spriteName = `${playerInfo.team}`
-    self.ship = self.physics.add.image(playerInfo.x, playerInfo.y, spriteName)
-        .setOrigin(0.5, 0.5)
-        .setDisplaySize(53, 40);
-    self.ship.setDrag(100);
-    self.ship.setAngularDrag(100);
-    self.ship.setMaxVelocity(200);
-    self.ship.team = spriteName;
-    // Assign laser group to ship
+    var spriteName = `${playerInfo.team}`;
+    self.ship = new Spaceship(self, playerInfo.x, playerInfo.y, spriteName).ship;
     self.ship.laserGroup = new LaserGroup(self);
 }
 
